@@ -5,69 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>河野アラーム - 勉強してください！</title>
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1 class="page-title">何アラームかけてるんですか？？<br>勉強してください！！！</h1>
-    <a href="https://www.youtube.com/watch?v=wBf47hGMch0" target="_blank" class="youtube-link">https://www.youtube.com/watch?v=wBf47hGMch0</a>
+<body class="relative min-h-screen overflow-hidden flex items-center justify-center px-5 pb-10 pt-[280px] bg-gradient-to-br from-sky-600 to-sky-400 text-gray-900">
+    <h1 class="fixed top-24 left-1/2 -translate-x-1/2 text-center text-white text-4xl md:text-6xl font-black tracking-wide leading-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.3)] z-20">
+        何アラームかけてるんですか？？<br>勉強してください！！！
+    </h1>
+    <a href="https://www.youtube.com/watch?v=wBf47hGMch0" target="_blank"
+        class="fixed top-[270px] left-1/2 -translate-x-1/2 text-white text-sm opacity-80 hover:opacity-100 drop-shadow-[0_2px_10px_rgba(0,0,0,0.3)] z-20">
+        https://www.youtube.com/watch?v=wBf47hGMch0
+    </a>
 
-    <div id="konoClones"></div>
+    <div id="konoClones" class="pointer-events-none fixed inset-0 z-0"></div>
 
-    <div class="container">
-        <div class="current-time-section">
-            <div class="current-time-label">現在時刻</div>
-            <div class="current-time" id="currentTime">--:--:--</div>
+    <div class="relative z-10 w-full max-w-md rounded-3xl bg-white shadow-2xl p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+        <div id="currentTimeSection" class="space-y-2 text-center">
+            <div class="text-gray-500 tracking-[0.3em] text-sm font-semibold uppercase">現在時刻</div>
+            <div id="currentTime" class="text-5xl font-bold text-sky-500 font-mono tracking-widest">--:--:--</div>
         </div>
 
-        <div class="mode-toggle">
-            <button class="mode-btn active" id="alarmModeBtn">⏰ アラーム</button>
-            <button class="mode-btn" id="timerModeBtn">⏱️ タイマー</button>
+        <div class="grid grid-cols-2 gap-3">
+            <button id="alarmModeBtn"
+                class="rounded-xl border border-white/40 bg-slate-100 text-slate-600 font-semibold py-2 transition hover:-translate-y-0.5">
+                ⏰ アラーム
+            </button>
+            <button id="timerModeBtn"
+                class="rounded-xl border border-white/40 bg-slate-100 text-slate-600 font-semibold py-2 transition hover:-translate-y-0.5">
+                ⏱️ タイマー
+            </button>
         </div>
 
-        <div class="alarm-setup">
-            <div class="alarm-section active" id="alarmSection">
-                <div class="time-input">
-                    <label for="alarmTime">アラーム時刻:</label>
-                    <input type="time" id="alarmTime" value="07:00">
-                </div>
+        <div class="flex flex-col gap-6">
+            <div id="alarmSection" class="space-y-4">
+                <label for="alarmTime" class="flex flex-col gap-2 text-lg font-semibold text-slate-600">
+                    アラーム時刻:
+                    <input type="time" id="alarmTime" value="07:00"
+                        class="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-lg outline-none focus:border-sky-500 transition" />
+                </label>
             </div>
 
-            <div class="timer-section" id="timerSection">
-                <div class="timer-display"><span id="timerMinutes">00</span>:<span id="timerSeconds">00</span></div>
-                <div class="timer-keypad">
-                    <button class="keypad-btn" data-num="1">1</button>
-                    <button class="keypad-btn" data-num="2">2</button>
-                    <button class="keypad-btn" data-num="3">3</button>
-                    <button class="keypad-btn" data-num="4">4</button>
-                    <button class="keypad-btn" data-num="5">5</button>
-                    <button class="keypad-btn" data-num="6">6</button>
-                    <button class="keypad-btn" data-num="7">7</button>
-                    <button class="keypad-btn" data-num="8">8</button>
-                    <button class="keypad-btn" data-num="9">9</button>
-                    <button class="keypad-btn clear" id="clearBtn">C</button>
-                    <button class="keypad-btn" data-num="0">0</button>
-                    <button class="keypad-btn delete" id="deleteBtn">⌫</button>
+            <div id="timerSection" class="space-y-3 hidden">
+                <div class="text-center text-4xl font-bold text-sky-500 font-mono tracking-[0.3em]">
+                    <span id="timerMinutes">00</span>:<span id="timerSeconds">00</span>
                 </div>
-                <div class="timer-presets">
-                    <button class="preset-btn" data-minutes="1">1分</button>
-                    <button class="preset-btn" data-minutes="3">3分</button>
-                    <button class="preset-btn" data-minutes="5">5分</button>
-                    <button class="preset-btn" data-minutes="10">10分</button>
-                    <button class="preset-btn" data-minutes="15">15分</button>
-                    <button class="preset-btn" data-minutes="30">30分</button>
-                </div>
+                <div id="timerKeypad" class="grid grid-cols-3 gap-1.5 mb-2"></div>
+                <div id="timerPresets" class="grid grid-cols-3 gap-1.5"></div>
             </div>
 
-            <button class="set-alarm" id="setAlarmBtn">セット</button>
-            <button class="cancel-alarm" id="cancelAlarmBtn">キャンセル</button>
-            <div class="status not-set" id="status">設定されていません</div>
+            <button id="setAlarmBtn"
+                class="w-full rounded-xl bg-sky-400 text-white text-lg font-semibold py-3 shadow-lg hover:bg-sky-500 transition">
+                セット
+            </button>
+            <button id="cancelAlarmBtn"
+                class="w-full rounded-xl bg-rose-500 text-white text-lg font-semibold py-3 shadow-lg hover:bg-rose-600 transition hidden">
+                キャンセル
+            </button>
+
+            <div id="status" class="text-center text-base font-medium rounded-xl py-3 px-4 bg-slate-100 text-slate-600 shadow-sm">
+                設定されていません
+            </div>
         </div>
     </div>
 
-    <div class="video-overlay" id="videoOverlay">
-        <video id="alarmVideo" loop>
+    <div id="videoOverlay" class="fixed inset-0 hidden bg-black/90 z-50 flex flex-col items-center justify-center gap-6">
+        <video id="alarmVideo" loop class="max-w-[90vw] max-h-[70vh] rounded-xl shadow-2xl">
             <source src="assets/benkyo.mp4" type="video/mp4">
         </video>
-        <button class="stop-alarm" id="stopAlarmBtn">アラームを止める</button>
+        <button id="stopAlarmBtn"
+            class="rounded-xl bg-rose-500 text-white text-xl font-semibold py-3 px-8 shadow-lg hover:bg-rose-600 transition">
+            アラームを止める
+        </button>
     </div>
 
     <script src="js/app.js"></script>
