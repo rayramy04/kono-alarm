@@ -7,15 +7,7 @@
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="relative min-h-screen overflow-hidden flex items-center justify-center px-5 pb-10 pt-[280px] bg-gradient-to-br from-sky-600 to-sky-400 text-gray-900">
-    <h1 class="fixed top-24 left-1/2 -translate-x-1/2 text-center text-white text-4xl md:text-6xl font-black tracking-wide leading-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.3)] z-20">
-        何アラームかけてるんですか？？<br>勉強してください！！！
-    </h1>
-    <a href="https://www.youtube.com/watch?v=wBf47hGMch0" target="_blank"
-        class="fixed top-[270px] left-1/2 -translate-x-1/2 text-white text-sm opacity-80 hover:opacity-100 drop-shadow-[0_2px_10px_rgba(0,0,0,0.3)] z-20">
-        https://www.youtube.com/watch?v=wBf47hGMch0
-    </a>
-
+<body class="relative min-h-screen overflow-hidden flex flex-col items-center justify-start px-5 pb-10 pt-[260px] sm:pt-[300px] lg:pt-[220px] bg-gradient-to-br from-sky-600 to-sky-400 text-gray-900">
     <div id="konoClones" class="pointer-events-none fixed inset-0 z-0">
         <div class="kono-clone" style="top:23%;right:1%;width:310px;height:310px;--float-distance:-38px;--float-rotate:3.5deg;"></div>
         <div class="kono-clone" style="top:38%;left:1%;width:290px;height:290px;--base-transform:scaleX(-1);--float-distance:-42px;--float-rotate:-2.5deg;--float-duration:7.5s;"></div>
@@ -23,7 +15,18 @@
         <div class="kono-clone" style="top:27%;left:18%;width:275px;height:275px;--float-distance:-36px;--float-rotate:-1.8deg;--float-duration:5s;"></div>
     </div>
 
-    <div class="relative z-10 w-full max-w-md rounded-3xl bg-white shadow-2xl p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+    <h1 class="fixed top-16 sm:top-24 left-1/2 -translate-x-1/2 w-full max-w-[min(95%,820px)] px-4 text-center text-white text-2xl sm:text-4xl lg:text-5xl font-black leading-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex flex-col gap-1.5 sm:gap-3 items-center z-20">
+        <span class="tracking-[0.8em] sm:tracking-[0.6em]">何アラームかけて</span>
+        <span class="tracking-[0.75em] sm:tracking-[0.6em]">るんですか？？</span>
+        <span class="tracking-[0.75em] sm:tracking-[0.6em]">勉強して</span>
+        <span class="tracking-[0.65em] sm:tracking-[0.5em]">ください！！！</span>
+    </h1>
+    <a href="https://www.youtube.com/watch?v=wBf47hGMch0" target="_blank"
+        class="fixed top-[250px] sm:top-[270px] left-1/2 -translate-x-1/2 w-full max-w-[min(90%,520px)] px-4 text-center text-white text-xs sm:text-sm opacity-80 hover:opacity-100 drop-shadow-[0_2px_10px_rgba(0,0,0,0.3)] z-20">
+        https://www.youtube.com/watch?v=wBf47hGMch0
+    </a>
+
+    <div class="relative z-10 w-full max-w-md rounded-3xl bg-white shadow-2xl p-6 space-y-6 max-h-[90vh] sm:max-h-[80vh] overflow-y-auto mt-6 sm:mt-3">
         <div id="currentTimeSection" class="space-y-2 text-center">
             <div class="text-gray-500 tracking-[0.3em] text-sm font-semibold uppercase">現在時刻</div>
             <div id="currentTime" class="text-5xl font-bold text-sky-500 font-mono tracking-widest">--:--:--</div>

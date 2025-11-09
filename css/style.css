@@ -42,3 +42,32 @@ body::after {
             rotate(var(--float-rotate, 0deg));
     }
 }
+
+@media (max-width: 768px) {
+    body {
+        padding-top: 60px;
+        padding-bottom: 60px;
+    }
+
+    .page-title {
+        position: static;
+        transform: none;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.3;
+        letter-spacing: 0.05em;
+        max-width: 90%;
+    }
+
+    .youtube-link {
+        position: static;
+        transform: none;
+        display: block;
+        margin-bottom: 3rem;
+        font-size: 0.65rem;
+    }
+
+    .kono-clone {
+        display: none;
+    }
+}
