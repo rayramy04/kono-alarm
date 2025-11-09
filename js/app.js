@@ -12,14 +12,22 @@ const MODE_ACTIVE_CLASSES = ['bg-sky-500', 'text-white', 'border-sky-500', 'shad
 const MODE_INACTIVE_CLASSES = ['bg-slate-100', 'text-slate-600', 'border-white/40'];
 const STATUS_BASE = 'text-center text-base font-medium rounded-xl py-3 px-4 shadow-sm';
 
+// ポモドーロ設定
+const POMODORO_WORK_TIME = 25 * 60; // 25分
+const POMODORO_BREAK_TIME = 5 * 60; // 5分
+const POMODORO_LONG_BREAK_TIME = 15 * 60; // 15分
+const POMODORO_CYCLES = 4; // 4サイクル
+
 const $ = id => document.getElementById(id);
 const [
     currentTimeDisplay,
     currentTimeSection,
     alarmSection,
     timerSection,
+    pomodoroSection,
     alarmModeBtn,
     timerModeBtn,
+    pomodoroModeBtn,
     setAlarmBtn,
     cancelAlarmBtn,
     statusEl,
@@ -31,14 +39,22 @@ const [
     timerMinutesDisplay,
     timerSecondsDisplay,
     keypadContainer,
-    presetsContainer
+    presetsContainer,
+    pomodoroMinutesDisplay,
+    pomodoroSecondsDisplay,
+    pomodoroStatusDisplay,
+    pomodoroCycleDisplay,
+    pomodoroWorkBtn,
+    pomodoroBreakBtn
 ] = [
     'currentTime',
     'currentTimeSection',
     'alarmSection',
     'timerSection',
+    'pomodoroSection',
     'alarmModeBtn',
     'timerModeBtn',
+    'pomodoroModeBtn',
     'setAlarmBtn',
     'cancelAlarmBtn',
     'status',
@@ -50,16 +66,29 @@ const [
     'timerMinutes',
     'timerSeconds',
     'timerKeypad',
-    'timerPresets'
+    'timerPresets',
+    'pomodoroMinutes',
+    'pomodoroSeconds',
+    'pomodoroStatus',
+    'pomodoroCycle',
+    'pomodoroWorkBtn',
+    'pomodoroBreakBtn'
 ].map($);
 
 let alarmTime = null, checkInterval = null, timerTimeout = null, currentMode = 'alarm', timerInput = '';
 
+// ポモドーロの状態
+let pomodoroTimer = null;
+let pomodoroTimeLeft = POMODORO_WORK_TIME;
+let pomodoroIsWork = true;
+let pomodoroCycle = 1;
+let pomodoroAutoTransition = false; // 自動遷移中かどうかのフラグ
+
 const pad = value => String(value).padStart(2, '0');
 const formatTime = date => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 const setStatus = (message, state = 'not-set') => {
-    statusEl.textContent = message;
     const variant = state === 'waiting' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600';
+    statusEl.textContent = message;
     statusEl.className = `${STATUS_BASE} ${variant}`;
 };
 const toggleButtons = running => {
@@ -69,7 +98,8 @@ const toggleButtons = running => {
 const clearTimers = () => {
     if (checkInterval) clearInterval(checkInterval);
     if (timerTimeout) clearTimeout(timerTimeout);
-    checkInterval = timerTimeout = null;
+    if (pomodoroTimer) clearInterval(pomodoroTimer);
+    checkInterval = timerTimeout = pomodoroTimer = null;
 };
 const setModeButtonState = (button, isActive) => {
     MODE_ACTIVE_CLASSES.forEach(cls => button.classList.toggle(cls, isActive));
@@ -123,19 +153,35 @@ const updateTimerDisplay = () => {
 const setMode = mode => {
     if (currentMode === mode) return;
     currentMode = mode;
-    const isTimer = mode === 'timer';
-    alarmSection.classList.toggle('hidden', isTimer);
-    timerSection.classList.toggle('hidden', !isTimer);
-    currentTimeSection.classList.toggle('hidden', isTimer);
-    setModeButtonState(alarmModeBtn, !isTimer);
-    setModeButtonState(timerModeBtn, isTimer);
+    
+    // セクションの表示/非表示を切り替え
+    alarmSection.classList.toggle('hidden', mode !== 'alarm');
+    timerSection.classList.toggle('hidden', mode !== 'timer');
+    pomodoroSection.classList.toggle('hidden', mode !== 'pomodoro');
+    
+    // 現在時刻の表示/非表示を切り替え
+    currentTimeSection.classList.toggle('hidden', mode !== 'alarm');
+    
+    // ボタンの状態を更新
+    setModeButtonState(alarmModeBtn, mode === 'alarm');
+    setModeButtonState(timerModeBtn, mode === 'timer');
+    setModeButtonState(pomodoroModeBtn, mode === 'pomodoro');
+    
+    // 実行中のタイマーをリセット
     resetAlarm();
+    
+    // ポモドーロモードの場合は初期化
+    if (mode === 'pomodoro') {
+        resetPomodoro();
+    }
 };
 
 setModeButtonState(alarmModeBtn, true);
 setModeButtonState(timerModeBtn, false);
+setModeButtonState(pomodoroModeBtn, false);
 alarmModeBtn.addEventListener('click', () => setMode('alarm'));
 timerModeBtn.addEventListener('click', () => setMode('timer'));
+pomodoroModeBtn.addEventListener('click', () => setMode('pomodoro'));
 
 const startTimer = (durationMs, labelText) => {
     clearTimers();
@@ -167,19 +213,18 @@ setAlarmBtn.addEventListener('click', () => {
             return;
         }
 
-        if (totalSeconds > 86399) {
-            alert('何やってるんですか？？23時間59分59秒以内で設定してください！！！');
-            timerInput = '';
-            updateTimerDisplay();
-            return;
-        }
+        const displayHours = hours > 0 ? `${hours}時間` : '';
+        const displayMinutes = minutes > 0 ? `${minutes}分` : '';
+        const displaySeconds = seconds > 0 ? `${seconds}秒` : '';
+        const timeText = displayHours + displayMinutes + displaySeconds;
 
-        const label = `${hours ? `${hours}時間` : ''}${minutes ? `${minutes}分` : ''}${seconds ? `${seconds}秒` : ''}`;
-        startTimer(totalSeconds * 1000, label || '数秒');
+        startTimer(totalSeconds * 1000, timeText);
+    } else if (currentMode === 'pomodoro') {
+        startPomodoro();
     } else {
         alarmTime = alarmTimeInput.value;
         if (!alarmTime) {
-            alert('何やってるんですか？？時刻を設定してください！！！');
+            alert('時刻を設定してください！');
             return;
         }
 
@@ -189,34 +234,183 @@ setAlarmBtn.addEventListener('click', () => {
         checkInterval = setInterval(() => {
             const now = new Date();
             const currentTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-            if (currentTime === alarmTime) {
-                triggerAlarm();
-            }
+            if (currentTime === alarmTime) triggerAlarm();
         }, 1000);
     }
 });
 
-cancelAlarmBtn.addEventListener('click', resetAlarm);
+cancelAlarmBtn.addEventListener('click', () => resetAlarm());
 
 function resetAlarm() {
     clearTimers();
     alarmTime = null;
     timerInput = '';
-    if (currentMode === 'timer') {
-        updateTimerDisplay();
-    }
-    setStatus('設定されていません', 'not-set');
+    if (currentMode === 'timer') updateTimerDisplay();
+    // ポモドーロモードでも、明示的にリセットが呼ばれた場合のみリセット
+    // カウントダウン終了時の自動リセットでは呼ばれないようにする
+    if (currentMode === 'pomodoro' && !pomodoroAutoTransition) resetPomodoro();
+    setStatus('設定されていません');
     toggleButtons(false);
 }
 
+// ポモドーロ機能
+function resetPomodoro() {
+    pomodoroTimeLeft = POMODORO_WORK_TIME;
+    pomodoroIsWork = true;
+    pomodoroCycle = 1;
+    updatePomodoroDisplay();
+    pomodoroWorkBtn.disabled = false;
+    pomodoroBreakBtn.disabled = false;
+}
+
+function updatePomodoroDisplay() {
+    const minutes = Math.floor(pomodoroTimeLeft / 60);
+    const seconds = pomodoroTimeLeft % 60;
+    pomodoroMinutesDisplay.textContent = pad(minutes);
+    pomodoroSecondsDisplay.textContent = pad(seconds);
+    pomodoroStatusDisplay.textContent = pomodoroIsWork ? '作業時間' : '休憩時間';
+    pomodoroCycleDisplay.textContent = pomodoroCycle;
+}
+
+function startPomodoro() {
+    clearTimers();
+    toggleButtons(true);
+    pomodoroAutoTransition = false;
+    
+    // 作業中か休憩中かに応じてステータスを設定
+    const statusText = pomodoroIsWork ? '作業中' : '休憩中';
+    const timeText = Math.floor(pomodoroTimeLeft / 60) + '分';
+    
+    // 4サイクルごとに長い休憩があることを表示するが、サイクル数は無限
+    const cycleInfo = pomodoroIsWork ? `サイクル ${pomodoroCycle}` : 
+                     (pomodoroCycle % 4 === 0 && !pomodoroIsWork ? '長い休憩' : '休憩');
+    setStatus(`ポモドーロ: ${statusText} (${timeText}) - ${cycleInfo}`, 'waiting');
+    
+    // ボタンを無効化
+    pomodoroWorkBtn.disabled = true;
+    pomodoroBreakBtn.disabled = true;
+    
+    // タイマー開始
+    pomodoroTimer = setInterval(() => {
+        pomodoroTimeLeft--;
+        updatePomodoroDisplay();
+        
+        if (pomodoroTimeLeft <= 0) {
+            clearInterval(pomodoroTimer);
+            pomodoroAutoTransition = true;
+            
+            // 作業が終わったら休憩、休憩が終わったら次の作業へ
+            if (pomodoroIsWork) {
+                // 作業終了、休憩開始
+                pomodoroIsWork = false;
+                
+                // 4サイクルごとに長い休憩
+                if (pomodoroCycle % 4 === 0) {
+                    pomodoroTimeLeft = POMODORO_LONG_BREAK_TIME;
+                } else {
+                    pomodoroTimeLeft = POMODORO_BREAK_TIME;
+                }
+                
+                // 作業終了のアラーム
+                triggerAlarm();
+            } else {
+                // 休憩終了、次の作業へ
+                pomodoroIsWork = true;
+                pomodoroTimeLeft = POMODORO_WORK_TIME;
+                pomodoroCycle++; // 休憩の後に次のサイクルへ
+                
+                // 休憩終了のアラーム
+                triggerAlarm();
+            }
+            
+            updatePomodoroDisplay();
+            
+            // アラームは表示するが、ポモドーロの状態はリセットしない
+            clearTimers();
+            videoOverlay.classList.remove('hidden');
+            alarmVideo.play();
+            
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('河野アラーム', {
+                    body: pomodoroIsWork ? '作業開始！' : '休憩時間です！',
+                    icon: pomodoroIsWork ? '📝' : '☕'
+                });
+            }
+            
+            // アラーム後も自動的に次のフェーズに移行できるようにボタンを有効化
+            pomodoroWorkBtn.disabled = false;
+            pomodoroBreakBtn.disabled = false;
+            toggleButtons(false);
+        }
+    }, 1000);
+}
+
+// ポモドーロボタンのイベントリスナー
+pomodoroWorkBtn.addEventListener('click', () => {
+    pomodoroIsWork = true;
+    pomodoroTimeLeft = POMODORO_WORK_TIME;
+    updatePomodoroDisplay();
+    
+    // 作業ボタンを押したら動画を再生
+    if (currentMode === 'pomodoro') {
+        // 一度アラームを表示
+        videoOverlay.classList.remove('hidden');
+        alarmVideo.play();
+        
+        // 通知も表示（許可されている場合）
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('河野アラーム', {
+                body: '作業開始！勉強してください！',
+                icon: '📝'
+            });
+        }
+        
+        // アラームを止めた後にタイマーを開始するため、ここではタイマーは開始しない
+        // アラームを止めるボタンのイベントリスナーで処理する
+        pomodoroAutoTransition = true;
+    }
+});
+
+pomodoroBreakBtn.addEventListener('click', () => {
+    pomodoroIsWork = false;
+    // 4サイクルごとに長い休憩
+    pomodoroTimeLeft = pomodoroCycle % 4 === 0 ? POMODORO_LONG_BREAK_TIME : POMODORO_BREAK_TIME;
+    updatePomodoroDisplay();
+    
+    // 休憩ボタンを押したら動画を再生
+    if (currentMode === 'pomodoro') {
+        // 一度アラームを表示
+        videoOverlay.classList.remove('hidden');
+        alarmVideo.play();
+        
+        // 通知も表示（許可されている場合）
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('河野アラーム', {
+                body: '休憩時間です！',
+                icon: '☕'
+            });
+        }
+        
+        // アラームを止めた後にタイマーを開始するため、ここではタイマーは開始しない
+        // アラームを止めるボタンのイベントリスナーで処理する
+        pomodoroAutoTransition = true;
+    }
+});
+
 function triggerAlarm() {
+    // ポモドーロモードの場合は、startPomodoro内で独自の処理を行うため、
+    // ここでは何もしない（既に処理済み）
+    if (currentMode === 'pomodoro' && pomodoroAutoTransition) {
+        return;
+    }
+    
     clearTimers();
     videoOverlay.classList.remove('hidden');
     alarmVideo.play();
 
     if ('Notification' in window && Notification.permission === 'granted') {
         new Notification('河野アラーム', {
-            body: '何やってるんですか？？勉強してください！！！',
+            body: '勉強してください！',
             icon: '📚'
         });
     }
@@ -226,7 +420,18 @@ stopAlarmBtn.addEventListener('click', () => {
     alarmVideo.pause();
     alarmVideo.currentTime = 0;
     videoOverlay.classList.add('hidden');
-    resetAlarm();
+    
+    // ポモドーロモードの場合は状態を保持してタイマーを開始
+    if (currentMode === 'pomodoro' && pomodoroAutoTransition) {
+        // アラームだけを閉じて、ポモドーロの状態は保持
+        pomodoroAutoTransition = false;
+        
+        // タイマーを開始
+        startPomodoro();
+    } else {
+        // 通常のアラームモードやタイマーモードの場合は完全リセット
+        resetAlarm();
+    }
 });
 
 document.addEventListener('visibilitychange', () => {
@@ -234,5 +439,3 @@ document.addEventListener('visibilitychange', () => {
         alarmVideo.play();
     }
 });
-
-resetAlarm();

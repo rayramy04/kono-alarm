@@ -29,14 +29,18 @@
             <div id="currentTime" class="text-5xl font-bold text-sky-500 font-mono tracking-widest">--:--:--</div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-3 gap-2">
             <button id="alarmModeBtn"
-                class="rounded-xl border border-white/40 bg-slate-100 text-slate-600 font-semibold py-2 transition hover:-translate-y-0.5">
+                class="rounded-xl border border-white/40 bg-slate-100 text-slate-600 font-semibold py-2 transition hover:-translate-y-0.5 text-sm md:text-base">
                 ⏰ アラーム
             </button>
             <button id="timerModeBtn"
-                class="rounded-xl border border-white/40 bg-slate-100 text-slate-600 font-semibold py-2 transition hover:-translate-y-0.5">
+                class="rounded-xl border border-white/40 bg-slate-100 text-slate-600 font-semibold py-2 transition hover:-translate-y-0.5 text-sm md:text-base">
                 ⏱️ タイマー
+            </button>
+            <button id="pomodoroModeBtn"
+                class="rounded-xl border border-white/40 bg-slate-100 text-slate-600 font-semibold py-2 transition hover:-translate-y-0.5 text-sm md:text-base">
+                🍅 ポモドーロ
             </button>
         </div>
 
@@ -55,6 +59,32 @@
                 </div>
                 <div id="timerKeypad" class="grid grid-cols-3 gap-1.5 mb-2"></div>
                 <div id="timerPresets" class="grid grid-cols-3 gap-1.5"></div>
+            </div>
+
+            <div id="pomodoroSection" class="space-y-4 hidden">
+                <div class="text-center">
+                    <div class="text-3xl md:text-4xl font-bold font-mono tracking-[0.2em] md:tracking-[0.3em] text-sky-500 mb-3 md:mb-4">
+                        <span id="pomodoroMinutes">25</span>:<span id="pomodoroSeconds">00</span>
+                    </div>
+                    
+                    <div class="mb-2 text-slate-600 font-semibold text-sm md:text-base">
+                        <span id="pomodoroStatus">作業時間</span> (サイクル <span id="pomodoroCycle">1</span>)
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 md:gap-3 mb-3 md:mb-4">
+                        <button id="pomodoroWorkBtn" class="rounded-xl bg-sky-500 text-white font-semibold py-2 text-xs md:text-sm transition hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                            作業 (25分)
+                        </button>
+                        <button id="pomodoroBreakBtn" class="rounded-xl bg-emerald-500 text-white font-semibold py-2 text-xs md:text-sm transition hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                            休憩 (5分)
+                        </button>
+                    </div>
+
+                    <div class="text-xs md:text-sm text-slate-500">
+                        <p>ポモドーロテクニック: 25分の集中作業と5分の休憩を<br>繰り返します。</p>
+                        <p class="mt-1">4サイクルごとに、より長い休憩（15分）を取りましょう。</p>
+                    </div>
+                </div>
             </div>
 
             <button id="setAlarmBtn"
