@@ -1,6 +1,13 @@
 const KEYPAD_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'];
 
-const TIMER_PRESETS = [1, 3, 5, 10, 15, 30];
+const TIMER_PRESETS = [
+    { label: '1分', seconds: 60 },
+    { label: '3分', seconds: 180 },
+    { label: '5分', seconds: 300 },
+    { label: '10分', seconds: 600 },
+    { label: '30分', seconds: 1800 },
+    { label: '1時間', seconds: 3600 }
+];
 const MODE_ACTIVE_CLASSES = ['bg-sky-500', 'text-white', 'border-sky-500', 'shadow-lg'];
 const MODE_INACTIVE_CLASSES = ['bg-slate-100', 'text-slate-600', 'border-white/40'];
 const STATUS_BASE = 'text-center text-base font-medium rounded-xl py-3 px-4 shadow-sm';
@@ -20,6 +27,7 @@ const [
     alarmVideo,
     stopAlarmBtn,
     alarmTimeInput,
+    timerHoursDisplay,
     timerMinutesDisplay,
     timerSecondsDisplay,
     keypadContainer,
@@ -38,6 +46,7 @@ const [
     'alarmVideo',
     'stopAlarmBtn',
     'alarmTime',
+    'timerHours',
     'timerMinutes',
     'timerSeconds',
     'timerKeypad',
@@ -79,7 +88,7 @@ keypadContainer.innerHTML = KEYPAD_KEYS.map(key => {
 keypadContainer.addEventListener('click', e => {
     const btn = e.target.closest('button[data-type]');
     if (!btn) return;
-    if (btn.dataset.type === 'digit' && timerInput.length < 4) {
+    if (btn.dataset.type === 'digit' && timerInput.length < 6) {
         timerInput += btn.dataset.value;
     } else if (btn.dataset.type === 'clear') {
         timerInput = '';
@@ -90,11 +99,11 @@ keypadContainer.addEventListener('click', e => {
 });
 
 const presetBtnBase = 'rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold py-2 transition hover:bg-sky-500 hover:text-white';
-presetsContainer.innerHTML = TIMER_PRESETS.map(minutes => `<button type="button" data-min="${minutes}" class="${presetBtnBase}">${minutes}分</button>`).join('');
+presetsContainer.innerHTML = TIMER_PRESETS.map(preset => `<button type="button" data-sec="${preset.seconds}" class="${presetBtnBase}">${preset.label}</button>`).join('');
 presetsContainer.addEventListener('click', e => {
-    const btn = e.target.closest('button[data-min]');
+    const btn = e.target.closest('button[data-sec]');
     if (!btn) return;
-    startTimer(parseInt(btn.dataset.min, 10) * 60000, `${btn.dataset.min}分`);
+    startTimer(parseInt(btn.dataset.sec, 10) * 1000, btn.textContent);
 });
 
 const updateCurrentTime = () => {
@@ -105,9 +114,10 @@ updateCurrentTime();
 setInterval(updateCurrentTime, 1000);
 
 const updateTimerDisplay = () => {
-    const padded = timerInput.padStart(4, '0');
-    timerMinutesDisplay.textContent = padded.slice(0, 2);
-    timerSecondsDisplay.textContent = padded.slice(2, 4);
+    const padded = timerInput.padStart(6, '0');
+    timerHoursDisplay.textContent = padded.slice(0, 2);
+    timerMinutesDisplay.textContent = padded.slice(2, 4);
+    timerSecondsDisplay.textContent = padded.slice(4, 6);
 };
 
 const setMode = mode => {
@@ -144,22 +154,32 @@ setAlarmBtn.addEventListener('click', () => {
     }
 
     if (currentMode === 'timer') {
-        const padded = timerInput.padStart(4, '0');
-        const minutes = parseInt(padded.slice(0, 2), 10);
-        const seconds = parseInt(padded.slice(2, 4), 10);
-        const totalSeconds = minutes * 60 + seconds;
+        const padded = timerInput.padStart(6, '0');
+        const hours = parseInt(padded.slice(0, 2), 10);
+        const minutes = parseInt(padded.slice(2, 4), 10);
+        const seconds = parseInt(padded.slice(4, 6), 10);
+        const totalSeconds = hours * 3600 + minutes * 60 + seconds;
 
         if (totalSeconds === 0) {
-            alert('時間を設定してください！');
+            alert('何やってるんですか？？時間を設定してください！！！');
+            timerInput = '';
+            updateTimerDisplay();
             return;
         }
 
-        const label = `${minutes ? `${minutes}分` : ''}${seconds ? `${seconds}秒` : ''}`;
+        if (totalSeconds > 86399) {
+            alert('何やってるんですか？？23時間59分59秒以内で設定してください！！！');
+            timerInput = '';
+            updateTimerDisplay();
+            return;
+        }
+
+        const label = `${hours ? `${hours}時間` : ''}${minutes ? `${minutes}分` : ''}${seconds ? `${seconds}秒` : ''}`;
         startTimer(totalSeconds * 1000, label || '数秒');
     } else {
         alarmTime = alarmTimeInput.value;
         if (!alarmTime) {
-            alert('時刻を設定してください！');
+            alert('何やってるんですか？？時刻を設定してください！！！');
             return;
         }
 
@@ -196,7 +216,7 @@ function triggerAlarm() {
 
     if ('Notification' in window && Notification.permission === 'granted') {
         new Notification('河野アラーム', {
-            body: '勉強してください！',
+            body: '何やってるんですか？？勉強してください！！！',
             icon: '📚'
         });
     }
