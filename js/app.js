@@ -99,7 +99,9 @@ const clearTimers = () => {
     if (checkInterval) clearInterval(checkInterval);
     if (timerTimeout) clearTimeout(timerTimeout);
     if (pomodoroTimer) clearInterval(pomodoroTimer);
-    checkInterval = timerTimeout = pomodoroTimer = null;
+    if (timerCountdownInterval) clearInterval(timerCountdownInterval);
+    checkInterval = timerTimeout = pomodoroTimer = timerCountdownInterval = null;
+    timerEndTime = 0;
 };
 const setModeButtonState = (button, isActive) => {
     MODE_ACTIVE_CLASSES.forEach(cls => button.classList.toggle(cls, isActive));
@@ -183,13 +185,47 @@ alarmModeBtn.addEventListener('click', () => setMode('alarm'));
 timerModeBtn.addEventListener('click', () => setMode('timer'));
 pomodoroModeBtn.addEventListener('click', () => setMode('pomodoro'));
 
+// タイマー用の変数
+let timerEndTime = 0;
+let timerCountdownInterval = null;
+
 const startTimer = (durationMs, labelText) => {
     clearTimers();
-    const targetTime = new Date(Date.now() + durationMs);
+    
+    // タイマー終了時刻を設定
+    timerEndTime = Date.now() + durationMs;
+    const targetTime = new Date(timerEndTime);
     const descriptor = labelText ? `${labelText}後` : '後';
     setStatus(`タイマー設定: ${descriptor} (${formatTime(targetTime)}) にアラームが再生されます`, 'waiting');
     toggleButtons(true);
-    timerTimeout = setTimeout(triggerAlarm, durationMs);
+    
+    // タイマー表示を初期化
+    updateTimerCountdown();
+    
+    // カウントダウンを1秒ごとに更新
+    timerCountdownInterval = setInterval(updateTimerCountdown, 1000);
+    
+    // タイマー終了時の処理
+    timerTimeout = setTimeout(() => {
+        clearInterval(timerCountdownInterval);
+        triggerAlarm();
+    }, durationMs);
+};
+
+// タイマーのカウントダウン表示を更新
+const updateTimerCountdown = () => {
+    if (timerEndTime <= 0) return;
+    
+    const remainingMs = Math.max(0, timerEndTime - Date.now());
+    const totalSeconds = Math.ceil(remainingMs / 1000);
+    
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    timerHoursDisplay.textContent = pad(hours);
+    timerMinutesDisplay.textContent = pad(minutes);
+    timerSecondsDisplay.textContent = pad(seconds);
 };
 
 setAlarmBtn.addEventListener('click', () => {
@@ -206,16 +242,16 @@ setAlarmBtn.addEventListener('click', () => {
         const seconds = parseInt(padded.slice(4, 6), 10);
         const totalSeconds = hours * 3600 + minutes * 60 + seconds;
 
-        if (totalSeconds === 0) {
+    if (totalSeconds === 0) {
             alert('何やってるんですか？？時間を設定してください！！！');
             timerInput = '';
             updateTimerDisplay();
-            return;
-        }
+        return;
+    }
 
         const displayHours = hours > 0 ? `${hours}時間` : '';
-        const displayMinutes = minutes > 0 ? `${minutes}分` : '';
-        const displaySeconds = seconds > 0 ? `${seconds}秒` : '';
+    const displayMinutes = minutes > 0 ? `${minutes}分` : '';
+    const displaySeconds = seconds > 0 ? `${seconds}秒` : '';
         const timeText = displayHours + displayMinutes + displaySeconds;
 
         startTimer(totalSeconds * 1000, timeText);
@@ -245,7 +281,13 @@ function resetAlarm() {
     clearTimers();
     alarmTime = null;
     timerInput = '';
-    if (currentMode === 'timer') updateTimerDisplay();
+    if (currentMode === 'timer') {
+        updateTimerDisplay();
+        // タイマー表示をリセット
+        timerHoursDisplay.textContent = '00';
+        timerMinutesDisplay.textContent = '00';
+        timerSecondsDisplay.textContent = '00';
+    }
     // ポモドーロモードでも、明示的にリセットが呼ばれた場合のみリセット
     // カウントダウン終了時の自動リセットでは呼ばれないようにする
     if (currentMode === 'pomodoro' && !pomodoroAutoTransition) resetPomodoro();
@@ -320,7 +362,7 @@ function startPomodoro() {
                 pomodoroCycle++; // 休憩の後に次のサイクルへ
                 
                 // 休憩終了のアラーム
-                triggerAlarm();
+        triggerAlarm();
             }
             
             updatePomodoroDisplay();
@@ -430,7 +472,7 @@ stopAlarmBtn.addEventListener('click', () => {
         startPomodoro();
     } else {
         // 通常のアラームモードやタイマーモードの場合は完全リセット
-        resetAlarm();
+    resetAlarm();
     }
 });
 
